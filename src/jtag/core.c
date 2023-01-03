@@ -1222,7 +1222,7 @@ static int jtag_examine_chain(void)
 	//	max_taps = JTAG_MAX_AUTO_TAPS;
 
 	/* Add room for end-of-chain marker. */
-	max_taps++;
+	//max_taps++;
 
 	uint8_t *idcode_buffer = calloc(4, max_taps);
 	if (!idcode_buffer)

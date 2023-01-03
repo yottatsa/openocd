@@ -6,3 +6,4 @@ How to run and test
     ./configure --enable-dummy --enable-ftdi --enable-usb-blaster --enable-verbose
     make
     ./src/openocd -f tcl/interface/dummy.cfg -f tcl/cpu/vortex86.cfg
+
