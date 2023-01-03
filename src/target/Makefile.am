@@ -30,7 +30,8 @@ noinst_LTLIBRARIES += %D%/libtarget.la
 	%D%/dsp5680xx.c \
 	%D%/hla_target.c \
 	$(ARMV8_SRC) \
-	$(MIPS64_SRC)
+	$(MIPS64_SRC) \
+	%D%/vortex86.c
 
 if HAVE_CAPSTONE
 %C%_libtarget_la_CPPFLAGS += $(CAPSTONE_CFLAGS)
@@ -260,7 +261,8 @@ ARC_SRC = \
 	%D%/arc_cmd.h \
 	%D%/arc_jtag.h \
 	%D%/arc_mem.h \
-	%D%/rtt.h
+	%D%/rtt.h \
+	%D%/vortex86.h
 
 include %D%/openrisc/Makefile.am
 include %D%/riscv/Makefile.am
