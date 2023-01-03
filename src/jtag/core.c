@@ -1067,7 +1067,7 @@ void jtag_sleep(uint32_t us)
 		alive_sleep((us+999)/1000);
 }
 
-#define JTAG_MAX_AUTO_TAPS 20
+#define JTAG_MAX_AUTO_TAPS 0
 
 #define EXTRACT_MFG(X)  (((X) & 0xffe) >> 1)
 #define EXTRACT_PART(X) (((X) & 0xffff000) >> 12)
@@ -1218,8 +1218,8 @@ static int jtag_examine_chain(void)
 	unsigned max_taps = jtag_tap_count();
 
 	/* Autoprobe up to this many. */
-	if (max_taps < JTAG_MAX_AUTO_TAPS)
-		max_taps = JTAG_MAX_AUTO_TAPS;
+	//if (max_taps < JTAG_MAX_AUTO_TAPS)
+	//	max_taps = JTAG_MAX_AUTO_TAPS;
 
 	/* Add room for end-of-chain marker. */
 	max_taps++;
