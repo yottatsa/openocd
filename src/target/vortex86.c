@@ -121,9 +121,10 @@ static uint32_t get_tapstatus(struct target *t)
 	if (irscan(t, scan.out, NULL, VORTEX86_IRLEN) != ERROR_OK)
 		return 0;
 	scan.out[0] = 0;
-	if (drscan(t, NULL, scan.out, VORTEX86_16BIN) != ERROR_OK)
+	scan.in[0] = 0;
+	if (drscan(t, scan.out, scan.in, VORTEX86_16BIN) != ERROR_OK)
 		return 0;
-	status = buf_get_u32(scan.out, 0, 32);
+	status = buf_get_u32(scan.in, 0, 32);
 	LOG_INFO("Status =  0x%" PRIx32, status);
 	return status;
 }
@@ -154,23 +155,36 @@ static int testee_halt(struct target *target)
 	target->state = TARGET_HALTED;
 	return ERROR_OK;
 }
+
+static void vortex86_break(struct target *target)
+{
+	LOG_DEBUG("Executing VORTEX low-level break");
+	tap_state_t path[3] = {TAP_DRSELECT, TAP_IRSELECT, TAP_RESET};
+	interface_jtag_add_pathmove(ARRAY_SIZE(path), path);
+	jtag_add_tlr();
+	jtag_execute_queue();
+	jtag_add_runtest(1, TAP_IDLE);
+	jtag_execute_queue();
+}
+
 static int vortex86_reset_assert(struct target *target)
 {
 	int res = ERROR_OK;
 
-	//tap_state_t path[1] = {TAP_IDLE};
 	struct vortex86_common *vortex86 = target_to_vortex86(target);
+	vortex86->flush = 0;
 
-	jtag_add_statemove(TAP_RESET);
-	jtag_add_statemove(TAP_IDLE);
-	jtag_execute_queue();
-	//jtag_add_pathmove(ARRAY_SIZE(path), path);
+	vortex86_break(target);
 
 	scan.out[0] = VORTEX86_RESET;
-	vortex86->flush = 0;
 	irscan(target, scan.out, NULL, VORTEX86_IRLEN);
-	irscan(target, scan.out, NULL, VORTEX86_IRLEN);
+	jtag_add_runtest(1, TAP_IDLE);
+	jtag_execute_queue();
 
+	vortex86_break(target);
+
+	irscan(target, scan.out, NULL, VORTEX86_IRLEN);
+	jtag_add_runtest(1, TAP_IDLE);
 	vortex86->flush = 1;
 	get_tapstatus(target);
 

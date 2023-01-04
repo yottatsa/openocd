@@ -1,7 +1,8 @@
 # Vortex86
 
 ## Status Constants
-(dunno what is the base)
+
+0 means it's running apparently
 
 1. ICE Reset
 2. User Halt
