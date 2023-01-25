@@ -73,6 +73,7 @@ static int irscan(struct target *t, uint8_t *out,
 	return retval;
 }
 
+
 static int drscan(struct target *t, uint8_t *out, uint8_t *in, uint8_t len)
 {
 	int retval = ERROR_OK;
@@ -114,12 +115,19 @@ static int drscan(struct target *t, uint8_t *out, uint8_t *in, uint8_t len)
 	return retval;
 }
 
+static int send_rdc_cmd(struct target *t, int cmd)
+{
+	scan.in[0] = 0;
+	scan.out[0] = cmd;
+	int res = irscan(t, scan.out, scan.in, VORTEX86_IRLEN);
+	scan.out[0] = 0;
+	return res;
+}
+
 static uint32_t get_tapstatus(struct target *t)
 {
 	uint32_t status;
-	scan.out[0] = VORTEX86_STATUS;
-	if (irscan(t, scan.out, NULL, VORTEX86_IRLEN) != ERROR_OK)
-		return 0;
+	send_rdc_cmd(t, VORTEX86_STATUS);
 	scan.out[0] = 0;
 	scan.in[0] = 0;
 	if (drscan(t, scan.out, scan.in, VORTEX86_16BIN) != ERROR_OK)
@@ -156,15 +164,19 @@ static int testee_halt(struct target *target)
 	return ERROR_OK;
 }
 
-static void vortex86_break(struct target *target)
+static void vortex86_reset(struct target *target)
 {
-	LOG_DEBUG("Executing VORTEX low-level break");
-	tap_state_t path[3] = {TAP_DRSELECT, TAP_IRSELECT, TAP_RESET};
+	LOG_DEBUG("Executing VORTEX low-level reset");
+	usleep(50000);
+	// TAP_IDLE doesn't happen here, just making it so it wont cry
+	tap_state_t path[] = {TAP_IDLE, TAP_DRSELECT, TAP_IRSELECT, TAP_RESET};
 	interface_jtag_add_pathmove(ARRAY_SIZE(path), path);
+	//jtag_execute_queue();
 	jtag_add_tlr();
-	jtag_execute_queue();
+	//jtag_execute_queue();
 	jtag_add_runtest(1, TAP_IDLE);
 	jtag_execute_queue();
+	usleep(50000);
 }
 
 static int vortex86_reset_assert(struct target *target)
@@ -174,16 +186,14 @@ static int vortex86_reset_assert(struct target *target)
 	struct vortex86_common *vortex86 = target_to_vortex86(target);
 	vortex86->flush = 0;
 
-	vortex86_break(target);
-
-	scan.out[0] = VORTEX86_RESET;
-	irscan(target, scan.out, NULL, VORTEX86_IRLEN);
+	vortex86_reset(target);
+	send_rdc_cmd(target, VORTEX86_RESET);
 	jtag_add_runtest(1, TAP_IDLE);
 	jtag_execute_queue();
 
-	vortex86_break(target);
+	//vortex86_reset(target);
 
-	irscan(target, scan.out, NULL, VORTEX86_IRLEN);
+	send_rdc_cmd(target, VORTEX86_RESET);
 	jtag_add_runtest(1, TAP_IDLE);
 	vortex86->flush = 1;
 	get_tapstatus(target);
